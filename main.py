@@ -7,11 +7,10 @@ import os
 
 # Load API key from .env file
 load_dotenv()
-client.api_key = os.getenv("OPENAI_API_KEY")
-
+api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize OpenAI client
-client = OpenAI()
+client = OpenAI(api_key=api_key)
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -32,19 +31,17 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat(data: MessageRequest):
     user_message = data.message
-    client = OpenAI()
 
     try:
         chat_response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Eres Clara, una asistente médica que habla español y ofrece consejos de salud."},
+                {"role": "system", "content": "Eres Clara, una asistente médica que habla español."},
                 {"role": "user", "content": user_message}
             ],
             temperature=0.7
         )
-
         return {"response": chat_response.choices[0].message.content}
+
     except Exception as e:
         return {"error": str(e)}
-    
