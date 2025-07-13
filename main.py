@@ -32,6 +32,7 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat(data: MessageRequest):
     user_message = data.message
+    client = OpenAI()
 
     try:
         chat_response = client.chat.completions.create(
