@@ -5,6 +5,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import uuid
+from pyairtable import Api
+from datetime import datetime
 
 # Load API key from .env file
 load_dotenv()
@@ -44,9 +46,8 @@ async def chat(data: MessageRequest):
             temperature=0.7
         )
         
-        from pyairtable import Api
-        from datetime import datetime
-
+        
+        #Log to Airtable
         api = Api(os.getenv("AIRTABLE_TOKEN"))
         base_id = os.getenv("AIRTABLE_BASE_ID")
         table_name = os.getenv("AIRTABLE_TABLE_NAME")
@@ -54,7 +55,7 @@ async def chat(data: MessageRequest):
 
         # Inside your /chat route, after Clara replies:
         table.create({
-            "user_id": "user_123",
+            "user_id": user_id,
             "timestamp": datetime.utcnow().isoformat(),
             "intent": "general_info",
             "message_count": 1,
