@@ -72,7 +72,6 @@ def upsert_user(api, base_id, user_table_name, user_id):
         # Create new user
         user_table.create({
             "user_id": user_id,
-            "first_seen": datetime.utcnow().isoformat(),
             "last_seen": datetime.utcnow().isoformat(),
             "plan_type": "free"
         })
