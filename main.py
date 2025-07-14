@@ -31,6 +31,7 @@ def detect_intent(message: str) -> str:
         return intent_response.choices[0].message.content.strip().lower()
     except Exception as e:
         return "unknown"
+import requests
 
 
 # Load API key from .env file
@@ -59,6 +60,16 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat(data: MessageRequest):
     user_message = data.message
+    # Get city and country from IP
+    try:
+        ip = requests.get("https://api.ipify.org").text  # Gets public IP of the server
+        geo = requests.get(f"https://ipapi.co/{ip}/json/").json()
+        city = geo.get("city", "Unknown")
+        country = geo.get("country_name", "Unknown")
+    except:
+        city = "Unknown"
+        country = "Unknown"
+
     user_id = str(uuid.uuid4())
     intent = detect_intent(user_message)
 
@@ -87,6 +98,9 @@ async def chat(data: MessageRequest):
             "message_count": 1,
             "plan_type": "free",
             "source": "framer_homepage"
+            "city": city,
+            "country": country,
+
 })
         return {"response": chat_response.choices[0].message.content}
 
