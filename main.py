@@ -97,7 +97,7 @@ async def chat(data: MessageRequest):
             "intent": intent,
             "message_count": 1,
             "plan_type": "free",
-            "source": "framer_homepage"
+            "source": "framer_homepage",
             "city": city,
             "country": country,
 
