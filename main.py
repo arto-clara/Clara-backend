@@ -105,7 +105,7 @@ def upsert_user(api, base_id, user_table_name, user_id, email=None, city=None, c
             "plan_type": "free",
             "city": city or "",
             "country": country or "",
-            "source": source or ""
+            "source": source or "",
         }
         if email and consent:
             create_data["email"] = email
@@ -176,7 +176,7 @@ async def chat(data: MessageRequest):
             "plan_type": "free",
             "source": "SOURCE",
             "city": city,
-            "country": country
+            "country": country,
 
 })
         return {"response": chat_response.choices[0].message.content}
