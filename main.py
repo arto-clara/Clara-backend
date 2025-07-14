@@ -7,6 +7,31 @@ import os
 import uuid
 from pyairtable import Api
 from datetime import datetime
+def detect_intent(message: str) -> str:
+    try:
+        intent_response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        """You are an intent classification engine. Classify the user's message "
+                        "into one of the following categories:\n"
+                        "- greeting\n"
+                        "- symptom_check\n"
+                        "- general_info\n"
+                        "- unknown\n\n"
+                        "Only return the label, nothing else."""
+                    ),
+                },
+                {"role": "user", "content": message},
+            ],
+            temperature=0.2
+        )
+        return intent_response.choices[0].message.content.strip().lower()
+    except Exception as e:
+        return "unknown"
+
 
 # Load API key from .env file
 load_dotenv()
@@ -35,6 +60,7 @@ class MessageRequest(BaseModel):
 async def chat(data: MessageRequest):
     user_message = data.message
     user_id = str(uuid.uuid4())
+    intent = detect_intent(user_message)
 
     try:
         chat_response = client.chat.completions.create(
@@ -57,7 +83,7 @@ async def chat(data: MessageRequest):
         table.create({
             "user_id": user_id,
             "timestamp": datetime.utcnow().isoformat(),
-            "intent": "general_info",
+            "intent": intent,
             "message_count": 1,
             "plan_type": "free",
             "source": "framer_homepage"
