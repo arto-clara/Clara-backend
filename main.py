@@ -10,6 +10,20 @@ from datetime import datetime
 from pyairtable import Api
 from datetime import datetime
 
+#extract_email_andconsent
+import re
+
+def extract_email_and_consent(message: str):
+    # Check for valid email
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}', message)
+    email = email_match.group(0) if email_match else None
+
+    # Check for affirmative consent
+    consent_phrases = ["sí", "claro", "está bien", "acepto", "de acuerdo"]
+    consent = any(phrase in message.lower() for phrase in consent_phrases)
+
+    return email, consent
+
 def detect_intent(message: str) -> str:
     try:
         intent_response = client.chat.completions.create(
@@ -34,7 +48,6 @@ def detect_intent(message: str) -> str:
 
 import requests
 
-
 # Load API key from .env file
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -56,32 +69,59 @@ app.add_middleware(
 # Define expected request body format
 class MessageRequest(BaseModel):
     message: str
+    
+#print/debug logs
+print(f"[DEBUG] Email: {email}")
+print(f"[DEBUG] Consent: {consent}")
+print(f"[DEBUG] City: {city}, Country: {country}")
+print(f"[DEBUG] User ID: {user_id}")
+
 #Create a new user if none exists/Update last_seen if the user already exists    
-def upsert_user(api, base_id, user_table_name, user_id):
+def upsert_user(api, base_id, user_table_name, user_id, email=None, city=None, country=None, source=None, consent=False):
     user_table = api.table(base_id, user_table_name)
 
     # Search for existing user by ID
     existing = user_table.first(formula=f"{{user_id}} = '{user_id}'")
 
     if existing:
-        # Update last_seen timestamp
-        user_table.update(existing["id"], {
-            "last_seen": datetime.utcnow().isoformat(),
-            "city": city,
-            "country": county,
-            "source": source
-        })
+        # Update last_seen and any new info
+        update_data = {
+            "last_seen": datetime.utcnow().isoformat()
+        }
+        if city: update_data["city"] = city
+        if country: update_data["country"] = country
+        if source: update_data["source"] = source
+        if email and consent:  # Only store if both are valid
+            update_data["email"] = email
+            update_data["consent"] = "yes"
+
+        user_table.update(existing["id"], update_data)
+
     else:
         # Create new user
-        user_table.create({
+        create_data = {
             "user_id": user_id,
-            "plan_type": "free"
-        })
+            "first_seen": datetime.utcnow().isoformat(),
+            "plan_type": "free",
+            "city": city or "",
+            "country": country or "",
+            "source": source or ""
+        }
+        if email and consent:
+            create_data["email"] = email
+            create_data["consent"] = "yes"
+
+        user_table.create(create_data)
+
+# Default source value (for marketing or A/B tracking)
+SOURCE = "SOURCE"
 
 # Define the /chat route
 @app.post("/chat")
 async def chat(data: MessageRequest):
     user_message = data.message
+    email, consent = extract_email_and_consent(user_message)
+
     # Get city and country from IP
     try:
         ip = requests.get("https://api.ipify.org").text  # Gets public IP of the server
@@ -99,9 +139,18 @@ async def chat(data: MessageRequest):
         chat_response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Eres Clara, una asistente médica que habla español."},
-                {"role": "user", "content": user_message}
-            ],
+    {
+        "role": "system",
+        "content": (
+            "Hola, soy Clara, tu asistente médica en línea. Estoy aquí para ayudarte con cualquier pregunta relacionada con tu salud. "
+            "Después de responder, puedo preguntarte si te gustaría dejar tu correo electrónico para recibir consejos de salud, contenido exclusivo o promociones. "
+            "Si aceptas, te pediré tu correo y confirmaré que das tu consentimiento para guardar esa información. "
+            "Solo registraré tu información si das tu permiso claramente."
+        )
+    },
+    {"role": "user", "content": user_message}
+]
+
             temperature=0.7
         )
         
@@ -115,8 +164,8 @@ async def chat(data: MessageRequest):
          # Log or update user in "Users" table
         user_table_name = "Users"
         user_table = api.table(base_id, user_table_name)
-        upsert_user(api, base_id, user_table_name, user_id)
-        
+        upsert_user(api, base_id, "Users", user_id, email=email, city=city, country=country, source="SOURCE", consent=consent)
+
 
         # Inside your /chat route, after Clara replies:
         table.create({
@@ -125,10 +174,9 @@ async def chat(data: MessageRequest):
             "intent": intent,
             "message_count": 1,
             "plan_type": "free",
-            "source": "framer_homepage",
+            "source": "SOURCE",
             "city": city,
-            "country": country,
-            "email": email
+            "country": country
 
 })
         return {"response": chat_response.choices[0].message.content}
