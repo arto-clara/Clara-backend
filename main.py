@@ -7,6 +7,9 @@ import os
 import uuid
 from pyairtable import Api
 from datetime import datetime
+from pyairtable import Api
+from datetime import datetime
+
 def detect_intent(message: str) -> str:
     try:
         intent_response = client.chat.completions.create(
@@ -53,6 +56,26 @@ app.add_middleware(
 # Define expected request body format
 class MessageRequest(BaseModel):
     message: str
+#Create a new user if none exists/Update last_seen if the user already exists    
+def upsert_user(api, base_id, user_table_name, user_id):
+    user_table = api.table(base_id, user_table_name)
+
+    # Search for existing user by ID
+    existing = user_table.first(formula=f"{{user_id}} = '{user_id}'")
+
+    if existing:
+        # Update last_seen timestamp
+        user_table.update(existing["id"], {
+            "last_seen": datetime.utcnow().isoformat()
+        })
+    else:
+        # Create new user
+        user_table.create({
+            "user_id": user_id,
+            "first_seen": datetime.utcnow().isoformat(),
+            "last_seen": datetime.utcnow().isoformat(),
+            "plan_type": "free"
+        })
 
 # Define the /chat route
 @app.post("/chat")
@@ -87,6 +110,12 @@ async def chat(data: MessageRequest):
         base_id = os.getenv("AIRTABLE_BASE_ID")
         table_name = os.getenv("AIRTABLE_TABLE_NAME")
         table = api.table(base_id, table_name)
+        
+         # Log or update user in "Users" table
+        user_table_name = "Users"
+        user_table = api.table(base_id, user_table_name)
+        upsert_user(api, base_id, user_table_name, user_id)
+        
 
         # Inside your /chat route, after Clara replies:
         table.create({
