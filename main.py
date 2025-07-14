@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import uuid
 
 # Load API key from .env file
 load_dotenv()
@@ -31,6 +32,7 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat(data: MessageRequest):
     user_message = data.message
+    user_id = str(uuid.uuid4())
 
     try:
         chat_response = client.chat.completions.create(
