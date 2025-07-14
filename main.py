@@ -15,13 +15,10 @@ def detect_intent(message: str) -> str:
                 {
                     "role": "system",
                     "content": (
-                        """You are an intent classification engine. Classify the user's message "
-                        "into one of the following categories:\n"
-                        "- greeting\n"
-                        "- symptom_check\n"
-                        "- general_info\n"
-                        "- unknown\n\n"
-                        "Only return the label, nothing else."""
+                        "You are an intent tagging engine. "
+                        "Analyze the user's message and generate a concise intent tag (in lowercase, no spaces, use underscores). "
+                        "Examples: greeting, symptom_check, prescription_refill, lab_results, mental_health, unknown. "
+                        "Only return the tag."
                     ),
                 },
                 {"role": "user", "content": message},
@@ -31,6 +28,7 @@ def detect_intent(message: str) -> str:
         return intent_response.choices[0].message.content.strip().lower()
     except Exception as e:
         return "unknown"
+
 import requests
 
 
