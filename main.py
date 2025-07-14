@@ -69,12 +69,22 @@ app.add_middleware(
 # Define expected request body format
 class MessageRequest(BaseModel):
     message: str
-    
-#print/debug logs
-print(f"[DEBUG] Email: {email}")
-print(f"[DEBUG] Consent: {consent}")
-print(f"[DEBUG] City: {city}, Country: {country}")
-print(f"[DEBUG] User ID: {user_id}")
+  # Extract email and opt-in consent from user message
+
+
+# Geolocate user by IP
+try:
+    ip = requests.get("https://api.ipify.org").text
+    geo = requests.get(f"https://ipapi.co/{ip}/json/").json()
+    city = geo.get("city", "Unknown")
+    country = geo.get("country_name", "Unknown")
+except:
+    city = "Unknown"
+    country = "Unknown"
+
+# Generate a unique user ID
+user_id = str(uuid.uuid4())
+  
 
 #Create a new user if none exists/Update last_seen if the user already exists    
 def upsert_user(api, base_id, user_table_name, user_id, email=None, city=None, country=None, source=None, consent=False):
@@ -125,7 +135,7 @@ async def chat(data: MessageRequest):
     # Get city and country from IP
     try:
         ip = requests.get("https://api.ipify.org").text  # Gets public IP of the server
-        geo = requests.get(f"https://ipapi.co/{ip}/json/").json()
+        geo = requests.get(f"https://ipapi.co/{ip}/json/".format(ip)).json()
         city = geo.get("city", "Unknown")
         country = geo.get("country_name", "Unknown")
     except:
@@ -134,6 +144,11 @@ async def chat(data: MessageRequest):
 
     user_id = str(uuid.uuid4())
     intent = detect_intent(user_message)
+    #print/debug logs
+    print(f"[DEBUG] Email: {email}")
+    print(f"[DEBUG] Consent: {consent}")
+    print(f"[DEBUG] City: {city}, Country: {country}")
+    print(f"[DEBUG] User ID: {user_id}")
 
     try:
         chat_response = client.chat.completions.create(
@@ -148,8 +163,12 @@ async def chat(data: MessageRequest):
             "Solo registraré tu información si das tu permiso claramente."
         )
     },
-    {"role": "user", "content": user_message}
-]
+    
+    {
+        "role": "user",
+        "content": user_message
+    }
+],
 
             temperature=0.7
         )
