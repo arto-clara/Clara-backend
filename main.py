@@ -66,7 +66,7 @@ def upsert_user(api, base_id, user_table_name, user_id):
     if existing:
         # Update last_seen timestamp
         user_table.update(existing["id"], {
-            "last_seen": datetime.utcnow().isoformat()
+            "last_seen": datetime.utcnow().isoformat(),
             "city": city,
             "country": county,
             "source": source
