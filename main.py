@@ -67,6 +67,9 @@ def upsert_user(api, base_id, user_table_name, user_id):
         # Update last_seen timestamp
         user_table.update(existing["id"], {
             "last_seen": datetime.utcnow().isoformat()
+            "city": city,
+            "country": county,
+            "source": source
         })
     else:
         # Create new user
@@ -125,6 +128,7 @@ async def chat(data: MessageRequest):
             "source": "framer_homepage",
             "city": city,
             "country": country,
+            "email": email
 
 })
         return {"response": chat_response.choices[0].message.content}
