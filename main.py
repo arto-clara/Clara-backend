@@ -41,25 +41,27 @@ async def chat(data: MessageRequest):
             ],
             temperature=0.7
         )
+        
+        from pyairtable import Api
+        from datetime import datetime
+
+        api = Api(os.getenv("AIRTABLE_TOKEN"))
+        base_id = os.getenv("AIRTABLE_BASE_ID")
+        table_name = os.getenv("AIRTABLE_TABLE_NAME")
+        table = api.table(base_id, table_name)
+
+        # Inside your /chat route, after Clara replies:
+        table.create({
+            "user_id": "user_123",
+            "timestamp": datetime.utcnow().isoformat(),
+            "intent": "general_info",
+            "message_count": 1,
+            "plan_type": "free",
+            "source": "framer_homepage"
+})
         return {"response": chat_response.choices[0].message.content}
 
     except Exception as e:
         return {"error": str(e)}
-    from pyairtable import Api
-from datetime import datetime
-
-api = Api(os.getenv("AIRTABLE_TOKEN"))
-base_id = os.getenv("AIRTABLE_BASE_ID")
-table_name = os.getenv("AIRTABLE_TABLE_NAME")
-table = api.table(base_id, table_name)
-
-# Inside your /chat route, after Clara replies:
-table.create({
-    "user_id": "user_123",
-    "timestamp": datetime.utcnow().isoformat(),
-    "intent": "general_info",
-    "message_count": 1,
-    "plan_type": "free",
-    "source": "framer_homepage"
-})
+    
 
