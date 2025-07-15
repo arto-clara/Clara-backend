@@ -173,7 +173,12 @@ async def chat(data: MessageRequest):
 
             temperature=0.7
         )
-        
+        return {
+    "user_id": user_id,
+    "response": chat_response.choices[0].message.content
+}
+    except Exception as e:
+        return {"error" : str (e)}
         
         #Log to Airtable
         api = Api(os.getenv("AIRTABLE_TOKEN"))
@@ -199,9 +204,7 @@ async def chat(data: MessageRequest):
             "country": country,
 
 })
-        return {"response": chat_response.choices[0].message.content}
 
-    except Exception as e:
-        return {"error": str(e)}
+  
     
 
