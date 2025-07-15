@@ -67,8 +67,10 @@ app.add_middleware(
 )
 
 # Define expected request body format
+from typing import Optional
 class MessageRequest(BaseModel):
     message: str
+    user_id: Optional[str] = None
   # Extract email and opt-in consent from user message
 
 
@@ -82,8 +84,6 @@ except:
     city = "Unknown"
     country = "Unknown"
 
-# Generate a unique user ID
-user_id = str(uuid.uuid4())
   
 
 #Create a new user if none exists/Update last_seen if the user already exists    
@@ -130,6 +130,8 @@ SOURCE = "SOURCE"
 @app.post("/chat")
 async def chat(data: MessageRequest):
     user_message = data.message
+    # Generate a unique user ID
+    user_id = data.user_id or str(uuid.uuid4())
     email, consent = extract_email_and_consent(user_message)
 
     # Get city and country from IP
@@ -157,10 +159,9 @@ async def chat(data: MessageRequest):
     {
         "role": "system",
         "content": (
-            "Hola, soy Clara, tu asistente médica en línea. Estoy aquí para ayudarte con cualquier pregunta relacionada con tu salud. "
-            "Después de responder, puedo preguntarte si te gustaría dejar tu correo electrónico para recibir consejos de salud, contenido exclusivo o promociones. "
-            "Si aceptas, te pediré tu correo y confirmaré que das tu consentimiento para guardar esa información. "
-            "Solo registraré tu información si das tu permiso claramente."
+            "Hola, soy Clara, tu asistente médica en línea. Estoy aquí para ayudarte con cualquier duda relacionada con tu salud. "
+            "Después de responder a tu pregunta, a veces puedo ofrecerte consejos de salud, contenido exclusivo o promociones especiales. "
+            "Si en algún momento te gustaría recibirlos, puedes dejarme tu correo electrónico. Solo lo guardaré si me das tu consentimiento claro. "
         )
     },
     
