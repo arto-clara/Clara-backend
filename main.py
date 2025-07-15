@@ -151,32 +151,29 @@ async def chat(data: MessageRequest):
     print(f"[DEBUG] Consent: {consent}")
     print(f"[DEBUG] City: {city}, Country: {country}")
     print(f"[DEBUG] User ID: {user_id}")
-
-    try:
+    
+    #try block
+    try: 
         chat_response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-    {
+        {
         "role": "system",
         "content": (
             "Hola, soy Clara, tu asistente médica en línea. Estoy aquí para ayudarte con cualquier duda relacionada con tu salud. "
             "Después de responder a tu pregunta, a veces puedo ofrecerte consejos de salud, contenido exclusivo o promociones especiales. "
             "Si en algún momento te gustaría recibirlos, puedes dejarme tu correo electrónico. Solo lo guardaré si me das tu consentimiento claro. "
         )
-    },
+        },
     
-    {
+        {
         "role": "user",
         "content": user_message
-    }
-],
-
-            temperature=0.7
-        )
-        return {
-    "user_id": user_id,
-    "response": chat_response.choices[0].message.content
-}
+        }
+        ],
+        temperature=0.7 
+     ) 
+        reply = chat_response.choices[0].message.content
     except Exception as e:
         return {"error" : str (e)}
         
@@ -202,8 +199,13 @@ async def chat(data: MessageRequest):
             "source": "SOURCE",
             "city": city,
             "country": country,
-
-})
+        })
+        
+        return {
+        "user_id": user_id,
+        "response": reply
+}
+        
 
   
     
