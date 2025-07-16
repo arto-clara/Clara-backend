@@ -96,8 +96,10 @@ def upsert_user(api, base_id, user_table_name, user_id, email=None, city=None, c
     if existing:
         # Update last_active_at and any new info
         update_data = {"last_active_at": datetime.utcnow().isoformat()
-        
-        }
+         }
+        current_count = existing.get("fields", {}).get("message_count", 0)
+        update_data["message_count"] = current_count + 1
+
         if city: update_data["city"] = city
         if country: update_data["country"] = country
         if source: update_data["source"] = source
