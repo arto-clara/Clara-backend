@@ -94,8 +94,8 @@ def upsert_user(api, base_id, user_table_name, user_id, email=None, city=None, c
     existing = user_table.first(formula=f"{{user_id}} = '{user_id}'")
 
     if existing:
-        # Update last_seen and any new info
-        update_data = {
+        # Update last_active_at and any new info
+        update_data = {"last_active_at": datetime.utcnow().isoformat()
         
         }
         if city: update_data["city"] = city
