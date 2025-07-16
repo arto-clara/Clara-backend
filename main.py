@@ -144,7 +144,7 @@ async def chat(data: MessageRequest):
         city = "Unknown"
         country = "Unknown"
 
-    user_id = str(uuid.uuid4())
+    
     intent = detect_intent(user_message)
     #print/debug logs
     print(f"[DEBUG] Email: {email}")
